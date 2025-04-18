@@ -1,0 +1,130 @@
+- name: Update APT
+  apt:
+   update_cache: yes
+
+- name: Install tools
+  apt:
+   pkg:
+   - git
+   - keepass2
+   - mono-complete  # keepass2 dependency
+   - xdotool        # keepass2 dependency
+   - remmina
+   - curl
+   - ca-certificates # at least for docker
+
+# wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+# sudo apt install -y ./google-chrome*.deb
+
+- name: Add Google signing key
+  ansible.builtin.apt_key:
+    url: https://dl.google.com/linux/linux_signing_key.pub
+    state: present
+
+- name: Add Google Chrome repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main"
+    state: present
+    filename: 'google-chrome'
+
+- name: Install Google Chrome
+  apt:
+    name: google-chrome-stable
+    state: latest
+
+# wget https://vscode.download.prss.microsoft.com/dbazure/download/stable/4949701c880d4bdb949e3c0e6b400288da7f474b/code_1.99.2-1744250061_amd64.deb
+# sudo apt install -y ./code*.deb
+
+- name: Add Microsoft GPG key
+  ansible.builtin.apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Add VS Code repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64,arm64,armhf] https://packages.microsoft.com/repos/code stable main"
+    state: present
+    filename: 'vscode'
+
+- name: Install Visual Studio Code
+  apt:
+    name: code
+    state: latest
+
+
+# Then Kubectl
+
+- name: Check if kubectl is already installed
+  stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_bin
+
+- name: Download bin file for kubectl
+  shell: |
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /tmp/kubectl
+    chmod 0755 /tmp/kubectl
+    mv /tmp/kubectl /usr/local/bin/kubectl
+  when: not kubectl_bin.stat.exists
+
+# Docker
+
+- name: Docker - Create keyrings directory if it does not exist
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Check if docker.asc file exists
+  stat:
+    path: /etc/apt/keyrings/docker.asc
+  register: docker_asc_file
+
+- name: Download docker gpg key
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  when: not docker_asc_file.stat.exists
+
+- name: Get system architecture
+  command: dpkg --print-architecture
+  register: arch_result
+  changed_when: false
+
+- name: Get Ubuntu codename
+  shell: |
+    . /etc/os-release && echo ${UBUNTU_CODENAME:-$VERSION_CODENAME}
+  register: codename_result
+  changed_when: false
+
+- name: Add Docker repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: |
+      deb [arch={{ arch_result.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ codename_result.stdout }} stable
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: apt update
+  apt:
+    update_cache: yes
+
+- name: Install Docker
+  apt:
+   pkg:
+   - docker-ce
+   - docker-ce-cli
+   - containerd.io
+   - docker-buildx-plugin
+   - docker-compose-plugin
+
+#- name: Install Wine & Winetricks
+#  apt:
+#   pkg:
+#    - wine-stable
+#    - winetricks
+#
+#- ansible.builtin.debug:
+#    msg:
+#    - Play the command "winetricks mspatcha" as non root user to prepare Wine

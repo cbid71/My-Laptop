@@ -128,3 +128,9 @@
 #- ansible.builtin.debug:
 #    msg:
 #    - Play the command "winetricks mspatcha" as non root user to prepare Wine
+
+- name: Install Latex env
+  apt:
+   pkgs:
+   - texstudio
+   - texlive-lang-french

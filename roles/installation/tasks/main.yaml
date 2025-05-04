@@ -134,3 +134,4 @@
    pkgs:
    - texstudio
    - texlive-lang-french
+   - texlive-latex-extra

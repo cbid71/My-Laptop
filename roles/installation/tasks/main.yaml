@@ -47,10 +47,10 @@
     state: present
     filename: 'vscode'
 
-- name: Install Visual Studio Code
-  apt:
-    name: code
-    state: latest
+#- name: Install Visual Studio Code
+#  apt:
+#    name: code
+#    state: latest
 
 
 # Then Kubectl
@@ -132,7 +132,7 @@
 
 - name: Install Latex env
   apt:
-   pkgs:
+   pkg:
    - texstudio
    - texlive-lang-french
    - texlive-latex-extra

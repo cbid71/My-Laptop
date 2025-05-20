@@ -1,0 +1,78 @@
+---
+
+- name: Start Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Check if minikube exists
+  stat:
+    path: /usr/local/bin/minikube
+  register: minikube_bin
+
+- name: Download minikube
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /usr/local/bin/minikube
+    mode: '0755'
+  when: not minikube_bin.stat.exists
+
+- name: Check Minikube status
+  command: minikube status --output=json
+  become_user: cyrille-biard
+  register: minikube_status
+  changed_when: false
+  failed_when: false
+
+#- name: Afficher tout le contenu de minikube_status
+#  debug:
+#    var: minikube_status
+
+- name: Start Minikube if stopped
+  command: minikube start
+  become_user: cyrille-biard
+  when: >
+    minikube_status.rc != 0 or
+    ('Host' not in minikube_status.stdout or '"Running"' not in minikube_status.stdout)
+
+- name: Clone Kubeflow manifests
+  git:
+    repo: https://github.com/kubeflow/manifests.git
+    dest: /tmp/manifests
+    version: master
+
+- name: Kustomize Build example
+  shell: |
+    cd /tmp/manifests
+    kubectl kustomize example > /tmp/manifests/output.yaml
+  register: build_result
+#  retries: 10
+#  delay: 10
+#  until: build_result.rc == 0
+
+#- name: debug
+#  debug:
+#   var: build_result
+
+- name: Apply yaml file after Kustomization
+  shell: |
+    kubectl apply -f /tmp/manifests/output.yaml > /tmp/kubeflow_manifests_apply.log
+  become_user: cyrille-biard
+  register: apply_result
+  ignore_errors: yes
+
+- name: debug
+  debug:
+    var: apply_result
+
+- name: Restart Minikube when a deployment is done
+  debug:
+    message: |
+     Kubeflow can be a little fuzzy right after the installation, think about rebooting Minikube :
+     minikube stop
+     minikube start
+     Then once everything works connect to the UI
+     kubectl port-forward svc/istio-ingressgateway 8080:80 -n istio-system
+     http://localhost:8080
+     The default email address is user@example.com and the default password is 12341234

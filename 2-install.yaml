@@ -1,4 +1,10 @@
 - hosts: localhost
   become: yes
   roles:
-   - installation
+   - role: installation
+     tags:
+     - installation
+   - role: minikube-and-kubeflow
+     tags:
+     - kubeflow
+

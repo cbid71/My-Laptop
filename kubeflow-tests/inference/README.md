@@ -1,6 +1,8 @@
 En l'état nous avons installé Ollama en bare-metal et non sur kubernetes, ç'aurait été mieux mais nous avons eu trop d'erreurs.
 Ollama est donc sur le host de Minikube.
 
+Ici le but est de pouvoir "déclarer" le Ollama dans kubeflow pour pouvoir s'en servir.
+
 ```
 ollama run mistral
 ```

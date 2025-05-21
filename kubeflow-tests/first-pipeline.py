@@ -3,7 +3,9 @@ from kfp import dsl
 import pandas as pd
 
 # Etape 1: Créer un DataFrame simple
-@dsl.component
+@dsl.component(
+    packages_to_install=["pandas"]
+)
 def create_dataframe_op() -> dict:
     # Créer un DataFrame simple avec pandas
     data = {'Nom': ['Alice', 'Bob', 'Charlie'], 'Age': [25, 30, 35]}
@@ -12,7 +14,9 @@ def create_dataframe_op() -> dict:
     return df.to_dict()
 
 # Etape 2: Afficher le DataFrame
-@dsl.component
+@dsl.component(
+    packages_to_install=["pandas"]
+)
 def print_dataframe_op(df: dict):
     # Convertir le dictionnaire en DataFrame pour l'affichage
     df_pd = pd.DataFrame(df)

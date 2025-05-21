@@ -1,6 +1,6 @@
 mkdir tests
-python3 -m venv kubeflow-env
-source kubeflow-env/bin/activate
+python3 -m venv tests
+source tests/bin/activate
 pip install kfp
 pip install pandas
 

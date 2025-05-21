@@ -1,0 +1,15 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: ollama-llm
+  namespace: kubeflow
+  annotations:
+    serving.kserve.io/suppress-container-naming: "true"
+spec:
+  predictor:
+    containers:
+    - name: predictor
+      image: registry.kube-system.svc.cluster.local:5000/inferenceimagemistral:latest
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 8080

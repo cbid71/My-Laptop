@@ -36,6 +36,17 @@
     minikube_status.rc != 0 or
     ('Host' not in minikube_status.stdout or '"Running"' not in minikube_status.stdout)
 
+- name: Check if Minikube addon 'registry' is enabled
+  shell: |
+    minikube addons list | grep -i registry | grep -i enabled
+   become_user: cyrille-biard
+   register: registry_check
+
+- name: Enable 'registry' Minikube addon if not already enabled
+  shell: |
+    minikube addons enable registry
+  when: registry_check.rc != 0
+
 - name: Clone Kubeflow manifests
   git:
     repo: https://github.com/kubeflow/manifests.git
